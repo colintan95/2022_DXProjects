@@ -14,12 +14,20 @@ class App {
 public:
   App(HWND hwnd, int windowWidth, int windowHeight);
 
+  void RenderFrame();
+
 private:
   void CreateDevice();
   void CreateCommandQueueAndSwapChain();
   void CreateCommandListAndFence();
 
   void CreatePipeline();
+  void CreateDescriptorHeaps();
+
+  void CreateVertexBuffer();
+
+  void MoveToNextFrame();
+  void WaitForGpu();
 
   HWND m_hwnd;
   int m_windowWidth = 0;
@@ -30,8 +38,16 @@ private:
   winrt::com_ptr<ID3D12CommandQueue> m_cmdQueue;
   winrt::com_ptr<IDXGISwapChain3> m_swapChain;
 
+  D3D12_VIEWPORT m_viewport;
+  D3D12_RECT m_scissorRect;
+
+  winrt::com_ptr<ID3D12CommandAllocator> m_cmdAlloc;
+
   struct Frame {
-    winrt::com_ptr<ID3D12CommandAllocator> m_cmdAlloc;
+    winrt::com_ptr<ID3D12CommandAllocator> CmdAlloc;
+    winrt::com_ptr<ID3D12Resource> SwapChainBuffer;
+    D3D12_CPU_DESCRIPTOR_HANDLE RtvHandle;
+    uint64_t FenceWaitValue = 0;
   };
   Frame m_frames[k_numFrames];
 
@@ -45,4 +61,10 @@ private:
 
   winrt::com_ptr<ID3D12RootSignature> m_rootSig;
   winrt::com_ptr<ID3D12PipelineState> m_pipeline;
+
+  winrt::com_ptr<ID3D12DescriptorHeap> m_rtvHeap;
+  uint32_t m_rtvHandleSize = 0;
+
+  winrt::com_ptr<ID3D12Resource> m_vertexBuffer;
+  D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
 };

@@ -43,6 +43,8 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, LPSTR cmdLine, int showCmd) {
       TranslateMessage(&msg);
       DispatchMessage(&msg);
     }
+
+    app.RenderFrame();
   }
 
   return 0;
