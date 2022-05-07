@@ -18,19 +18,19 @@ static constexpr int k_WindowHeight = 768;
 static const wchar_t* k_WindowName = L"Impl";
 
 _Use_decl_annotations_
-int WINAPI WinMain(HINSTANCE instance, HINSTANCE, LPSTR cmdLine, int showCmd) {
+int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE, LPSTR cmdLine, int showCmd) {
   WNDCLASSEX wndClass{};
   wndClass.cbSize = sizeof(WNDCLASSEX);
   wndClass.style = CS_HREDRAW | CS_VREDRAW;
   wndClass.lpfnWndProc = WindowProc;
-  wndClass.hInstance = instance;
+  wndClass.hInstance = hinstance;
   wndClass.hCursor = LoadCursor(NULL, IDC_ARROW);
   wndClass.lpszClassName = k_WindowName;
   RegisterClassEx(&wndClass);
 
   HWND hwnd = CreateWindow(wndClass.lpszClassName, k_WindowName, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT,
-                           CW_USEDEFAULT, k_WindowWidth, k_WindowHeight, nullptr, nullptr, instance,
-                           nullptr);
+                           CW_USEDEFAULT, k_WindowWidth, k_WindowHeight, nullptr, nullptr,
+                           hinstance, nullptr);
   ShowWindow(hwnd, showCmd);
 
   MSG msg{};
