@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{98538560-ff7d-421d-ab3a-c14692de0f9a}</ProjectGuid>
+    <RootNamespace>Base</RootNamespace>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(SolutionDir)\Main.props" />
+  <ItemGroup>
+    <ClInclude Include="GltfLoader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="GltfLoader.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+</Project>

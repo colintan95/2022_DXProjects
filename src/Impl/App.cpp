@@ -13,6 +13,8 @@
 
 #include "d3dx12.h"
 
+#include "GltfLoader.h"
+
 using namespace DirectX;
 
 using winrt::check_bool;
@@ -216,10 +218,12 @@ void App::CreateDescriptorHeaps() {
 }
 
 void App::CreateVertexBuffer() {
+  base::LoadGltf("");
+
   float vertexData[] = {
-    -0.5f, -0.5f, 2.f,
-    0.f, 0.5f, 2.f,
-    0.5f, -0.5f, 2.f
+    -0.5f, -0.5f, 0.f,
+    0.f, 0.5f, 0.f,
+    0.5f, -0.5f, 0.f
   };
   size_t bufferSize = sizeof(vertexData);
 
@@ -271,12 +275,13 @@ void App::CreateVertexBuffer() {
 }
 
 void App::CreateConstantBuffer() {
+  XMMATRIX viewMat = XMMatrixTranslation(0.f, 0.f, 2.f);
   XMMATRIX projMat = XMMatrixPerspectiveFovLH(
       XM_PI / 4.f, static_cast<float>(m_windowWidth) / static_cast<float>(m_windowHeight), 0.1f,
       1000.f);
 
   XMFLOAT4X4 worldViewProjMat;
-  XMStoreFloat4x4(&worldViewProjMat, XMMatrixTranspose(projMat));
+  XMStoreFloat4x4(&worldViewProjMat, XMMatrixTranspose(viewMat * projMat));
 
   size_t bufferSize =
       (sizeof(DirectX::XMFLOAT4X4) + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) &
