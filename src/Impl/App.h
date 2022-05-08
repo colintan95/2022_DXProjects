@@ -8,6 +8,8 @@
 
 #include <cstdint>
 
+#include "GltfLoader.h"
+
 constexpr int k_numFrames = 3;
 
 class App {
@@ -65,6 +67,8 @@ private:
 
   winrt::com_ptr<ID3D12DescriptorHeap> m_rtvHeap;
   uint32_t m_rtvHandleSize = 0;
+
+  base::GltfLoader m_gltfLoader;
 
   winrt::com_ptr<ID3D12Resource> m_vertexBuffer;
   D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;

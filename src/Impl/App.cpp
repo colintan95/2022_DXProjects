@@ -218,7 +218,7 @@ void App::CreateDescriptorHeaps() {
 }
 
 void App::CreateVertexBuffer() {
-  base::LoadGltf("");
+  m_gltfLoader.RequestLoad("Cube.gltf");
 
   float vertexData[] = {
     -0.5f, -0.5f, 0.f,
