@@ -7,17 +7,26 @@
 
 namespace base {
 
+struct BufferView {
+  int BufferIndex;
+  int Length;
+  int Offset;
+};
+
 struct Primitive {
-  D3D12_VERTEX_BUFFER_VIEW Position;
+  BufferView Position;
+  BufferView Indices;
 };
 
 struct Mesh {
   std::vector<Primitive> Primitives;
 };
 
-class GltfLoader {
-public:
-  void RequestLoad(const char* path);
+struct Scene {
+  std::vector<std::vector<uint8_t>> Buffers;
+  std::vector<Mesh> Meshes;
 };
+
+Scene LoadGltf(const char* path);
 
 } // namespace base

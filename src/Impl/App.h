@@ -7,8 +7,7 @@
 #include <wil/resource.h>
 
 #include <cstdint>
-
-#include "GltfLoader.h"
+#include <vector>
 
 constexpr int k_numFrames = 3;
 
@@ -26,7 +25,7 @@ private:
   void CreatePipeline();
   void CreateDescriptorHeaps();
 
-  void CreateVertexBuffer();
+  void CreateVertexBuffers();
   void CreateConstantBuffer();
 
   void MoveToNextFrame();
@@ -68,10 +67,14 @@ private:
   winrt::com_ptr<ID3D12DescriptorHeap> m_rtvHeap;
   uint32_t m_rtvHandleSize = 0;
 
-  base::GltfLoader m_gltfLoader;
+  std::vector<winrt::com_ptr<ID3D12Resource>> m_vertexBuffers;
 
-  winrt::com_ptr<ID3D12Resource> m_vertexBuffer;
-  D3D12_VERTEX_BUFFER_VIEW m_vertexBufferView;
+  struct Primitive {
+    D3D12_VERTEX_BUFFER_VIEW PositionBufferView;
+    D3D12_INDEX_BUFFER_VIEW IndexBufferView;
+    uint32_t NumVertices;
+  };
+  std::vector<Primitive> m_primitives;
 
   winrt::com_ptr<ID3D12Resource> m_constantBuffer;
 };
