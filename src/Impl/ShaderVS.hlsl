@@ -1,4 +1,9 @@
+struct MatrixBuffer {
+	float4x4 WorldViewProj;
+};
 
-float4 main(float2 screenPos : POSITION) : SV_POSITION {
-	return float4(screenPos, 0, 1);
+ConstantBuffer<MatrixBuffer> s_matrixBuffer : register(b0);
+
+float4 main(float3 position : POSITION) : SV_POSITION {
+	return mul(float4(position, 1.0), s_matrixBuffer.WorldViewProj);
 }

@@ -1,6 +1,7 @@
 #include "App.h"
 
 #include <d3d12.h>
+#include <DirectXMath.h>
 #include <dxgi1_6.h>
 #include <winrt/base.h>
 
@@ -11,6 +12,8 @@
 #include <vector>
 
 #include "d3dx12.h"
+
+using namespace DirectX;
 
 using winrt::check_bool;
 using winrt::check_hresult;
@@ -26,6 +29,7 @@ App::App(HWND hwnd, int windowWidth, int windowHeight)
   CreateDescriptorHeaps();
 
   CreateVertexBuffer();
+  CreateConstantBuffer();
 }
 
 void App::CreateDevice() {
@@ -135,18 +139,20 @@ static std::vector<uint8_t> LoadShaderFromFile(const char* path) {
 }
 
 void App::CreatePipeline() {
-  D3D12_ROOT_SIGNATURE_DESC1 rootSigDesc{};
-  rootSigDesc.NumParameters = 0;
-  rootSigDesc.NumStaticSamplers = 0;
-  rootSigDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+  CD3DX12_DESCRIPTOR_RANGE1 range{};
+  range.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0);
 
-  D3D12_VERSIONED_ROOT_SIGNATURE_DESC versionedDesc{};
-  versionedDesc.Version = D3D_ROOT_SIGNATURE_VERSION_1_1;
-  versionedDesc.Desc_1_1 = rootSigDesc;
+  CD3DX12_ROOT_PARAMETER1 rootParam{};
+  rootParam.InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE,
+                                     D3D12_SHADER_VISIBILITY_VERTEX);
+
+  CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSigDesc;
+  rootSigDesc.Init_1_1(1, &rootParam, 0, nullptr,
+                       D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
   com_ptr<ID3DBlob> signatureBlob;
   com_ptr<ID3DBlob> errorBlob;
-  check_hresult(D3D12SerializeVersionedRootSignature(&versionedDesc, signatureBlob.put(),
+  check_hresult(D3D12SerializeVersionedRootSignature(&rootSigDesc, signatureBlob.put(),
                                                      errorBlob.put()));
   check_hresult(m_device->CreateRootSignature(0, signatureBlob->GetBufferPointer(),
                                               signatureBlob->GetBufferSize(),
@@ -164,7 +170,8 @@ void App::CreatePipeline() {
   pixelShader.BytecodeLength = pixelShaderSrc.size();
 
   D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
-    {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+    {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+     0}
   };
 
   D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
@@ -209,7 +216,11 @@ void App::CreateDescriptorHeaps() {
 }
 
 void App::CreateVertexBuffer() {
-  float vertexData[] = { -0.5f, -0.5f, 0.f, 0.5f, 0.5f, -0.5f };
+  float vertexData[] = {
+    -0.5f, -0.5f, 2.f,
+    0.f, 0.5f, 2.f,
+    0.5f, -0.5f, 2.f
+  };
   size_t bufferSize = sizeof(vertexData);
 
   com_ptr<ID3D12Resource> uploadBuffer;
@@ -256,7 +267,34 @@ void App::CreateVertexBuffer() {
 
   m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
   m_vertexBufferView.SizeInBytes = static_cast<uint32_t>(bufferSize);
-  m_vertexBufferView.StrideInBytes = sizeof(float) * 2;
+  m_vertexBufferView.StrideInBytes = sizeof(float) * 3;
+}
+
+void App::CreateConstantBuffer() {
+  XMMATRIX projMat = XMMatrixPerspectiveFovLH(
+      XM_PI / 4.f, static_cast<float>(m_windowWidth) / static_cast<float>(m_windowHeight), 0.1f,
+      1000.f);
+
+  XMFLOAT4X4 worldViewProjMat;
+  XMStoreFloat4x4(&worldViewProjMat, XMMatrixTranspose(projMat));
+
+  size_t bufferSize =
+      (sizeof(DirectX::XMFLOAT4X4) + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) &
+      ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
+
+  CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
+  CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);
+
+  check_hresult(m_device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE,
+                                                  &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ,
+                                                  nullptr, IID_PPV_ARGS(m_constantBuffer.put())));
+
+  XMFLOAT4X4* ptr;
+  check_hresult(m_constantBuffer->Map(0, nullptr, reinterpret_cast<void**>(&ptr)));
+
+  *ptr = worldViewProjMat;
+
+  m_constantBuffer->Unmap(0, nullptr);
 }
 
 void App::RenderFrame() {
@@ -272,6 +310,8 @@ void App::RenderFrame() {
 
   m_cmdList->SetPipelineState(m_pipeline.get());
   m_cmdList->SetGraphicsRootSignature(m_rootSig.get());
+
+  m_cmdList->SetGraphicsRootConstantBufferView(0, m_constantBuffer->GetGPUVirtualAddress());
 
   m_cmdList->RSSetViewports(1, &m_viewport);
   m_cmdList->RSSetScissorRects(1, &m_scissorRect);
