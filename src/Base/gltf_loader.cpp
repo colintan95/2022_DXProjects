@@ -1,4 +1,4 @@
-#include "GltfLoader.h"
+#include "gltf_loader.h"
 
 #include <nlohmann/json.hpp>
 #include <winrt/base.h>
@@ -69,15 +69,17 @@ Scene LoadGltf(const char* path) {
     Mesh mesh{};
 
     for (auto& primJson : meshJson["primitives"]) {
-      Primitive primitive{};
+      Primitive prim{};
 
       int positionIndex = primJson["attributes"]["POSITION"].get<int>();
+      int normalIndex = primJson["attributes"]["NORMAL"].get<int>();
       int indicesIndex = primJson["indices"].get<int>();
 
-      primitive.Position = GetBufferViewForAccessorIndex(positionIndex, gltfJson);
-      primitive.Indices = GetBufferViewForAccessorIndex(indicesIndex, gltfJson);
+      prim.Position = GetBufferViewForAccessorIndex(positionIndex, gltfJson);
+      prim.Normal = GetBufferViewForAccessorIndex(normalIndex, gltfJson);
+      prim.Indices = GetBufferViewForAccessorIndex(indicesIndex, gltfJson);
 
-      mesh.Primitives.push_back(std::move(primitive));
+      mesh.Primitives.push_back(std::move(prim));
     }
 
     scene.Meshes.push_back(std::move(mesh));

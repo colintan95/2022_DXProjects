@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.32228.343
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Impl", "src\Impl\Impl.vcxproj", "{50DD7C9F-B3C0-4623-A47A-D3EC678CB8C9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "impl", "src\impl\impl.vcxproj", "{50DD7C9F-B3C0-4623-A47A-D3EC678CB8C9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Base", "src\Base\Base.vcxproj", "{98538560-FF7D-421D-AB3A-C14692DE0F9A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "base", "src\base\base.vcxproj", "{98538560-FF7D-421D-AB3A-C14692DE0F9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

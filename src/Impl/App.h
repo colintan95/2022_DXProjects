@@ -14,6 +14,7 @@ constexpr int k_numFrames = 3;
 class App {
 public:
   App(HWND hwnd, int windowWidth, int windowHeight);
+  ~App();
 
   void RenderFrame();
 
@@ -71,10 +72,17 @@ private:
 
   struct Primitive {
     D3D12_VERTEX_BUFFER_VIEW PositionBufferView;
+    D3D12_VERTEX_BUFFER_VIEW NormalBufferView;
     D3D12_INDEX_BUFFER_VIEW IndexBufferView;
     uint32_t NumVertices;
   };
   std::vector<Primitive> m_primitives;
+
+  struct MatrixBuffer {
+    DirectX::XMFLOAT4X4 WorldMat;
+    DirectX::XMFLOAT4X4 WorldViewProjMat;
+  };
+  MatrixBuffer m_matrixBuffer;
 
   winrt::com_ptr<ID3D12Resource> m_constantBuffer;
 };

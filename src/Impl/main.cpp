@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "App.h"
+#include "app.h"
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam) {
   switch (message) {

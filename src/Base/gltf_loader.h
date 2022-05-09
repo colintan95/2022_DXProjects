@@ -15,6 +15,7 @@ struct BufferView {
 
 struct Primitive {
   BufferView Position;
+  BufferView Normal;
   BufferView Indices;
 };
 

@@ -9,13 +9,13 @@
   <PropertyGroup>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
-  <Import Project="$(SolutionDir)\Main.props" />
+  <Import Project="$(SolutionDir)\common.props" />
   <ItemGroup>
     <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="GltfLoader.h" />
+    <ClInclude Include="gltf_loader.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="GltfLoader.cpp" />
+    <ClCompile Include="gltf_loader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

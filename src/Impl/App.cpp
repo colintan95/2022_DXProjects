@@ -1,4 +1,4 @@
-#include "App.h"
+#include "app.h"
 
 #include <d3d12.h>
 #include <DirectXMath.h>
@@ -13,7 +13,7 @@
 
 #include "d3dx12.h"
 
-#include "GltfLoader.h"
+#include "gltf_loader.h"
 
 using namespace DirectX;
 
@@ -160,8 +160,8 @@ void App::CreatePipeline() {
                                               signatureBlob->GetBufferSize(),
                                               IID_PPV_ARGS(m_rootSig.put())));
 
-  std::vector<uint8_t> vertexShaderSrc = LoadShaderFromFile("ShaderVS.cso");
-  std::vector<uint8_t> pixelShaderSrc = LoadShaderFromFile("ShaderPS.cso");
+  std::vector<uint8_t> vertexShaderSrc = LoadShaderFromFile("shader_vs.cso");
+  std::vector<uint8_t> pixelShaderSrc = LoadShaderFromFile("shader_ps.cso");
 
   D3D12_SHADER_BYTECODE vertexShader;
   vertexShader.pShaderBytecode = vertexShaderSrc.data();
@@ -173,7 +173,8 @@ void App::CreatePipeline() {
 
   D3D12_INPUT_ELEMENT_DESC inputElementDescs[] = {
     {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-     0}
+     0},
+    {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
   };
 
   D3D12_INPUT_LAYOUT_DESC inputLayoutDesc{};
@@ -285,6 +286,12 @@ void App::CreateVertexBuffers() {
       prim.PositionBufferView.SizeInBytes = primData.Position.Length;
       prim.PositionBufferView.StrideInBytes = sizeof(float) * 3;
 
+      prim.NormalBufferView.BufferLocation =
+          m_vertexBuffers[primData.Normal.BufferIndex]->GetGPUVirtualAddress() +
+          primData.Normal.Offset;
+      prim.NormalBufferView.SizeInBytes = primData.Normal.Length;
+      prim.NormalBufferView.StrideInBytes = sizeof(float) * 3;
+
       prim.IndexBufferView.BufferLocation =
           m_vertexBuffers[primData.Indices.BufferIndex]->GetGPUVirtualAddress() +
           primData.Indices.Offset;
@@ -306,16 +313,28 @@ void App::CreateVertexBuffers() {
 }
 
 void App::CreateConstantBuffer() {
-  XMMATRIX viewMat = XMMatrixTranslation(0.f, 0.f, 6.f);
+  XMMATRIX worldMat = XMMatrixRotationY(XM_PI/6.f);
+
+  float cameraRoll = 0.f;
+  float cameraYaw = 0.f;
+  float cameraPitch = XM_PI/8.f;
+
+  XMMATRIX cameraViewMat =
+      XMMatrixRotationY(-cameraYaw) * XMMatrixRotationX(-cameraPitch) *
+      XMMatrixRotationZ(-cameraRoll);
+
+  XMMATRIX viewMat =
+      DirectX::XMMatrixTranslation(0.f, -2.2f, 6.f) * cameraViewMat;
   XMMATRIX projMat = XMMatrixPerspectiveFovLH(
       XM_PI / 4.f, static_cast<float>(m_windowWidth) / static_cast<float>(m_windowHeight), 0.1f,
       1000.f);
 
-  XMFLOAT4X4 worldViewProjMat;
-  XMStoreFloat4x4(&worldViewProjMat, XMMatrixTranspose(viewMat * projMat));
+  XMStoreFloat4x4(&m_matrixBuffer.WorldMat, XMMatrixTranspose(worldMat));
+  XMStoreFloat4x4(&m_matrixBuffer.WorldViewProjMat,
+                  XMMatrixTranspose(worldMat * viewMat * projMat));
 
   size_t bufferSize =
-      (sizeof(DirectX::XMFLOAT4X4) + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) &
+      (sizeof(m_matrixBuffer) + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) &
       ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
 
   CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
@@ -325,12 +344,16 @@ void App::CreateConstantBuffer() {
                                                   &bufferDesc, D3D12_RESOURCE_STATE_GENERIC_READ,
                                                   nullptr, IID_PPV_ARGS(m_constantBuffer.put())));
 
-  XMFLOAT4X4* ptr;
+  MatrixBuffer* ptr;
   check_hresult(m_constantBuffer->Map(0, nullptr, reinterpret_cast<void**>(&ptr)));
 
-  *ptr = worldViewProjMat;
+  *ptr = m_matrixBuffer;
 
   m_constantBuffer->Unmap(0, nullptr);
+}
+
+App::~App() {
+  WaitForGpu();
 }
 
 void App::RenderFrame() {
@@ -362,7 +385,9 @@ void App::RenderFrame() {
   for (Primitive& prim : m_primitives) {
     m_cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    m_cmdList->IASetVertexBuffers(0, 1, &prim.PositionBufferView);
+    D3D12_VERTEX_BUFFER_VIEW bufferViews[] = { prim.PositionBufferView, prim.NormalBufferView };
+    m_cmdList->IASetVertexBuffers(0, _countof(bufferViews), bufferViews);
+
     m_cmdList->IASetIndexBuffer(&prim.IndexBufferView);
 
     m_cmdList->DrawIndexedInstanced(prim.NumVertices, 1, 0, 0, 0);

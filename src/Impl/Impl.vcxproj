@@ -4,23 +4,23 @@
   <PropertyGroup>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{50dd7c9f-b3c0-4623-a47a-d3ec678cb8c9}</ProjectGuid>
-    <RootNamespace>Impl</RootNamespace>
+    <RootNamespace>impl</RootNamespace>
   </PropertyGroup>
-  <Import Project="$(SolutionDir)\Main.props" />
+  <Import Project="$(SolutionDir)\common.props" />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(SolutionDir)\src\Base;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)\src\base;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="App.cpp" />
+    <ClCompile Include="app.cpp" />
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="App.h" />
+    <ClInclude Include="app.h" />
     <ClInclude Include="d3dx12.h" />
   </ItemGroup>
   <ItemDefinitionGroup>
@@ -29,24 +29,24 @@
     </FxCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <FxCompile Include="ShaderPS.hlsl">
+    <FxCompile Include="shader_ps.hlsl">
       <ShaderType>Pixel</ShaderType>
     </FxCompile>
-    <FxCompile Include="ShaderVS.hlsl">
+    <FxCompile Include="shader_vs.hlsl">
       <ShaderType>Vertex</ShaderType>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <CopyFileToFolders Include="Cube.bin">
+    <CopyFileToFolders Include="cube.bin">
       <FileType>Document</FileType>
     </CopyFileToFolders>
-    <CopyFileToFolders Include="Cube.gltf">
+    <CopyFileToFolders Include="cube.gltf">
       <FileType>Document</FileType>
     </CopyFileToFolders>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="$(SolutionDir)\src\Base\Base.vcxproj">
+    <ProjectReference Include="$(SolutionDir)\src\base\base.vcxproj">
       <Project>{98538560-ff7d-421d-ab3a-c14692de0f9a}</Project>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
