@@ -13,7 +13,8 @@
 
 #include "d3dx12.h"
 
-#include "gltf_loader.h"
+#include "base/gltf_loader.h"
+#include "base/utils.h"
 
 using namespace DirectX;
 
@@ -333,9 +334,8 @@ void App::CreateConstantBuffer() {
   XMStoreFloat4x4(&m_matrixBuffer.WorldViewProjMat,
                   XMMatrixTranspose(worldMat * viewMat * projMat));
 
-  size_t bufferSize =
-      (sizeof(m_matrixBuffer) + (D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1)) &
-      ~(D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT - 1);
+  size_t bufferSize = base::GetAlignedSize(m_matrixBuffer,
+                                           D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT);
 
   CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_UPLOAD);
   CD3DX12_RESOURCE_DESC bufferDesc = CD3DX12_RESOURCE_DESC::Buffer(bufferSize);

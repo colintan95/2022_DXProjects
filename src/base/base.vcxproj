@@ -9,10 +9,16 @@
   <PropertyGroup>
     <ConfigurationType>StaticLibrary</ConfigurationType>
   </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>include\base;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
   <Import Project="$(SolutionDir)\common.props" />
   <ItemGroup>
     <ClInclude Include="d3dx12.h" />
-    <ClInclude Include="gltf_loader.h" />
+    <ClInclude Include="include\base\gltf_loader.h" />
+    <ClInclude Include="include\base\utils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gltf_loader.cpp" />
