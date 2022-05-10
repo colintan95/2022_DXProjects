@@ -31,6 +31,7 @@ App::App(HWND hwnd, int windowWidth, int windowHeight)
   CreatePipeline();
   CreateDescriptorHeaps();
 
+  CreateDepthTexture();
   CreateVertexBuffers();
   CreateConstantBuffer();
 }
@@ -202,20 +203,33 @@ void App::CreatePipeline() {
 }
 
 void App::CreateDescriptorHeaps() {
-  D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
-  rtvHeapDesc.NumDescriptors = k_numFrames;
-  rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+  {
+    D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc{};
+    rtvHeapDesc.NumDescriptors = k_numFrames;
+    rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 
-  check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(m_rtvHeap.put())));
-  m_rtvHandleSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+    check_hresult(m_device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(m_rtvHeap.put())));
+    m_rtvHandleSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
-  CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
+    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(m_rtvHeap->GetCPUDescriptorHandleForHeapStart());
 
-  for (int i = 0; i < k_numFrames; ++i) {
-    m_device->CreateRenderTargetView(m_frames[i].SwapChainBuffer.get(), nullptr, handle);
-    m_frames[i].RtvHandle = handle;
+    for (int i = 0; i < k_numFrames; ++i) {
+      m_device->CreateRenderTargetView(m_frames[i].SwapChainBuffer.get(), nullptr, handle);
+      m_frames[i].RtvHandle = handle;
 
-    handle.Offset(m_rtvHandleSize);
+      handle.Offset(m_rtvHandleSize);
+    }
+  }
+
+  {
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{};
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+
+    check_hresult(m_device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(m_dsvHeap.put())));
+    m_dsvHandleSize = m_device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+
+    m_dsvHandle = m_dsvHeap->GetCPUDescriptorHandleForHeapStart();
   }
 }
 
@@ -263,8 +277,27 @@ static com_ptr<ID3D12Resource> UploadDataToGpuBuffer(
   return buffer;
 }
 
+void App::CreateDepthTexture() {
+  CD3DX12_HEAP_PROPERTIES heapProps(D3D12_HEAP_TYPE_DEFAULT);
+  CD3DX12_RESOURCE_DESC textureDesc =
+      CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, m_windowWidth, m_windowHeight, 1, 0, 1, 0,
+                                   D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL |
+                                   D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE);
+  CD3DX12_CLEAR_VALUE clearValue(DXGI_FORMAT_D32_FLOAT, 1.f, 0);
+
+  check_hresult(m_device->CreateCommittedResource(&heapProps, D3D12_HEAP_FLAG_NONE, &textureDesc,
+                                                  D3D12_RESOURCE_STATE_DEPTH_WRITE, &clearValue,
+                                                  IID_PPV_ARGS(m_depthTexture.put())));
+
+  D3D12_DEPTH_STENCIL_VIEW_DESC depthViewDesc{};
+  depthViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+  depthViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+  m_device->CreateDepthStencilView(m_depthTexture.get(), &depthViewDesc, m_dsvHandle);
+}
+
 void App::CreateVertexBuffers() {
-  base::Scene scene = base::LoadGltf("Cube.gltf");
+  base::Scene scene = base::LoadGltf("cube.gltf");
 
   check_hresult(m_cmdAlloc->Reset());
   check_hresult(m_cmdList->Reset(m_cmdAlloc.get(), nullptr));
@@ -314,11 +347,11 @@ void App::CreateVertexBuffers() {
 }
 
 void App::CreateConstantBuffer() {
-  XMMATRIX worldMat = XMMatrixRotationY(XM_PI/6.f);
+  XMMATRIX worldMat = XMMatrixRotationY(XM_PI / 6.f);
 
   float cameraRoll = 0.f;
   float cameraYaw = 0.f;
-  float cameraPitch = XM_PI/8.f;
+  float cameraPitch = XM_PI / 8.f;
 
   XMMATRIX cameraViewMat =
       XMMatrixRotationY(-cameraYaw) * XMMatrixRotationX(-cameraPitch) *
@@ -377,10 +410,12 @@ void App::RenderFrame() {
 
   D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = m_frames[m_currentFrame].RtvHandle;
 
-  m_cmdList->OMSetRenderTargets(1, &rtvHandle, false, nullptr);
+  m_cmdList->OMSetRenderTargets(1, &rtvHandle, false, &m_dsvHandle);
 
   float clearColor[] = { 0.f, 0.f, 0.f, 1.f };
   m_cmdList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+  m_cmdList->ClearDepthStencilView(m_dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
   for (Primitive& prim : m_primitives) {
     m_cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

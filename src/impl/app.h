@@ -26,6 +26,7 @@ private:
   void CreatePipeline();
   void CreateDescriptorHeaps();
 
+  void CreateDepthTexture();
   void CreateVertexBuffers();
   void CreateConstantBuffer();
 
@@ -68,7 +69,12 @@ private:
   winrt::com_ptr<ID3D12DescriptorHeap> m_rtvHeap;
   uint32_t m_rtvHandleSize = 0;
 
-  std::vector<winrt::com_ptr<ID3D12Resource>> m_vertexBuffers;
+  winrt::com_ptr<ID3D12DescriptorHeap> m_dsvHeap;
+  uint32_t m_dsvHandleSize = 0;
+
+  D3D12_CPU_DESCRIPTOR_HANDLE m_dsvHandle;
+
+  winrt::com_ptr<ID3D12Resource> m_depthTexture;
 
   struct Primitive {
     D3D12_VERTEX_BUFFER_VIEW PositionBufferView;
@@ -77,6 +83,8 @@ private:
     uint32_t NumVertices;
   };
   std::vector<Primitive> m_primitives;
+
+  std::vector<winrt::com_ptr<ID3D12Resource>> m_vertexBuffers;
 
   struct MatrixBuffer {
     DirectX::XMFLOAT4X4 WorldMat;
