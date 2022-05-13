@@ -76,6 +76,8 @@ private:
 
   winrt::com_ptr<ID3D12Resource> m_depthTexture;
 
+  std::vector<winrt::com_ptr<ID3D12Resource>> m_vertexBuffers;
+
   struct Primitive {
     D3D12_VERTEX_BUFFER_VIEW PositionBufferView;
     D3D12_VERTEX_BUFFER_VIEW NormalBufferView;
@@ -83,8 +85,6 @@ private:
     uint32_t NumVertices;
   };
   std::vector<Primitive> m_primitives;
-
-  std::vector<winrt::com_ptr<ID3D12Resource>> m_vertexBuffers;
 
   struct MatrixBuffer {
     DirectX::XMFLOAT4X4 WorldMat;
