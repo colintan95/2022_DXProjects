@@ -11,10 +11,10 @@
 #include <string>
 #include <vector>
 
-#include "d3dx12.h"
+#include <base/gltf_loader.h>
+#include <base/utils.h>
 
-#include "base/gltf_loader.h"
-#include "base/utils.h"
+#include "d3dx12.h"
 
 using namespace DirectX;
 

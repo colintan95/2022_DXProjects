@@ -19,9 +19,11 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="include\base\gltf_loader.h" />
     <ClInclude Include="include\base\utils.h" />
+    <ClInclude Include="include\base\window.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="gltf_loader.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
